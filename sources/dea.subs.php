@@ -8,7 +8,7 @@
  * version 1.1 (the "License"). You can obtain a copy of the License at
  * http://mozilla.org/MPL/1.1/.
  *
- * @version 1.0.2
+ * @version 1.0.3
  *
  */
 
@@ -188,37 +188,38 @@ function isrs_dea_for_11()
 function ilpf_dea(&$profile_fields)
 {
 	// Update the profile input_validate function with one that will use DEA
-	$profile_fields['email_address']['input_validate'] = create_function('&$value', '
+	$profile_fields['email_address']['input_validate'] = function ($value) {
 		global $context, $old_profile, $profile_vars, $modSettings;
 
-		if (strtolower($value) == strtolower($old_profile[\'email_address\']))
+		if (strtolower($value) === strtolower($old_profile['email_address']))
+		{
 			return false;
-
-		$isValid = profileValidateEmail($value, $context[\'id_member\']);
+		}
+		$isValid = profileValidateEmail($value, $context['id_member']);
 
 		// Perform a DEA check as well?
-		if ($isValid === true && !empty($modSettings[\'dea_enabled\']))
+		if ($isValid === true && !empty($modSettings['dea_enabled']))
 		{
 			$isValid = dea_validate_email($value);
 			if ($isValid === false)
 			{
-				loadLanguage(\'dea\');
-				$isValid = \'dea_email\';
+				loadLanguage('dea');
+				$isValid = 'dea_email';
 			}
 		}
 
 		// Do they need to revalidate? If so schedule the function!
-		if ($isValid === true && !empty($modSettings[\'send_validation_onChange\']) && !allowedTo(\'moderate_forum\'))
+		if ($isValid === true && !empty($modSettings['send_validation_onChange']) && !allowedTo('moderate_forum'))
 		{
-			require_once(SUBSDIR . \'/Auth.subs.php\');
-			$profile_vars[\'validation_code\'] = generateValidationCode();
-			$profile_vars[\'is_activated\'] = 2;
-			$context[\'profile_execute_on_save\'][] = \'profileSendActivation\';
-			unset($context[\'profile_execute_on_save\'][\'reload_user\']);
+			require_once(SUBSDIR . '/Auth.subs.php');
+			$profile_vars['validation_code'] = generateValidationCode();
+			$profile_vars['is_activated'] = 2;
+			$context['profile_execute_on_save'][] = 'profileSendActivation';
+			unset($context['profile_execute_on_save']['reload_user']);
 		}
 
 		return $isValid;
-	');
+	};
 }
 
 /**
